@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import LoginPage from './pages/loginPage/loginPage';
 import SuccessPage from './pages/successPage/successPage';
+import QuestionApp from './components/questions/questionApp';
 
 export default function App() {
     return (
@@ -9,6 +10,7 @@ export default function App() {
             <Routes>
                 <Route path='/' element={<LoginPage />} />
                 <Route path='/success' element={<SuccessPage />} />
+                <Route path='/question' element={<QuestionApp />} />
             </Routes>
         </Router>
     );
