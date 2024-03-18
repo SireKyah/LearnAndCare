@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from './lib/helper/supabaseClient';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import LoginPage from './pages/loginPage/loginPage'; // Capitalized component name
+import SuccessPage from './pages/successPage/successPage'; // Capitalized component name
 
 export default function App() {
-    const [users, setUsers] = useState([]);
-    console.log(users);
-
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    async function fetchUsers() {
-        const { data } = await supabase.from('users').select('*');
-        setUsers(data);
-    }
-
-    return <div>App</div>;
+    return (
+        <Router>
+            <Routes>
+                <Route path='/' element={<LoginPage />} />
+                <Route path='/success' element={<SuccessPage />} />
+            </Routes>
+        </Router>
+    );
 }
