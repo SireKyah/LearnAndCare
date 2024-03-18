@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import LoginPage from './pages/loginPage/loginPage'; // Capitalized component name
-import SuccessPage from './pages/successPage/successPage'; // Capitalized component name
+import LoginPage from './pages/loginPage/loginPage';
+import SuccessPage from './pages/successPage/successPage';
 
 export default function App() {
     return (
