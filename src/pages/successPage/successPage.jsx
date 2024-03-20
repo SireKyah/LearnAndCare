@@ -31,6 +31,7 @@ export default function successPage() {
                 <>
                     <h1>successPage</h1>
                     <p>Welcome, {user.email}</p>
+                    
                     <button onClick={() => signOutUser()}>Sign Out</button>
                 </>
             ) : (
