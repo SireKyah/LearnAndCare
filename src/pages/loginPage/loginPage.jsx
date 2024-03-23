@@ -9,7 +9,7 @@ export default function loginPage() {
 
     supabase.auth.onAuthStateChange(async (event) => {
         if (event == 'SIGNED_IN') {
-            navigate('/success');
+            navigate('/home');
         }
     });
 

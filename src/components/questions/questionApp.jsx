@@ -1,17 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import {
-    ChakraProvider,
-    Box,
-    Button,
-    Center,
-    Heading,
-    Stack,
-    Text,
-    Input,
-} from '@chakra-ui/react';
+import { Box, Button, Center, Heading, Text, Input } from '@chakra-ui/react';
+import { Link } from 'react-router-dom';
 import supabase from './../../lib/helper/supabaseClient'; // Import Supabase client
 
-function QuestioningApp() {
+function QuestioningApp({ user }) {
     const [questions, setQuestions] = useState([]);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedChoice, setSelectedChoice] = useState('');
@@ -20,16 +12,34 @@ function QuestioningApp() {
     const [updatedQuestionText, setUpdatedQuestionText] = useState('');
     const [updatedChoices, setUpdatedChoices] = useState([]);
     const [isEditing, setIsEditing] = useState(false);
+    const [points, setPoints] = useState(0);
 
     useEffect(() => {
+        console.log(user);
         fetchQuestions();
+        fetchUserPoints();
     }, []);
+
+    const fetchUserPoints = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('points')
+                .select('pointValue')
+                .eq('user_id', user.id)
+                .single();
+            if (error) throw error;
+            setPoints(data?.pointValue || 0); // Set user points or default to 0 if not found
+        } catch (error) {
+            console.error('Error fetching user points:', error.message);
+        }
+    };
 
     const fetchQuestions = async () => {
         try {
             const { data, error } = await supabase
                 .from('questions')
-                .select('*');
+                .select('*')
+                .eq('user_id', user.id);
             if (error) throw error;
             setQuestions(data || []); // Make sure to handle empty data case
         } catch (error) {
@@ -41,15 +51,33 @@ function QuestioningApp() {
         setSelectedChoice(choice);
     };
 
-    const handleNextQuestion = () => {
+    const handleNextQuestion = async () => {
         if (selectedChoice === questions[currentQuestionIndex].correct_answer) {
             setScore(score + 1);
+            const newPoints = points + 1;
+            await updatePoints(newPoints);
+            setPoints(newPoints); // Update points in the front end after successful update
         }
         setSelectedChoice('');
         if (currentQuestionIndex + 1 < questions.length) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
         } else {
             setShowResult(true);
+        }
+    };
+
+    const updatePoints = async (newPoints) => {
+        try {
+            const { data, error } = await supabase
+                .from('points')
+                .update([{ user_id: user.id, pointValue: newPoints }])
+                .eq('user_id', user.id);
+            if (error) throw error;
+            console.log('Points updated successfully');
+            return newPoints; // Return updated points
+        } catch (error) {
+            console.error('Error updating points:', error.message);
+            return points; // Return previous points in case of error
         }
     };
 
@@ -61,13 +89,10 @@ function QuestioningApp() {
     };
 
     const handleInputChange = (event) => {
-        setUpdatedQuestionText(event.target.value);
-    };
-
-    const handleChoicesChange = (index, event) => {
-        const newChoices = [...updatedChoices];
-        newChoices[index] = event.target.value;
-        setUpdatedChoices(newChoices);
+        const choices = event.target.value
+            .split(',')
+            .map((choice) => choice.trim());
+        setUpdatedChoices(choices);
     };
 
     const handleUpdateQuestion = async (index) => {
@@ -118,7 +143,31 @@ function QuestioningApp() {
     };
 
     if (questions.length === 0) {
-        return <div>Loading...</div>; // Add loading state while fetching questions
+        return (
+            <Center h='100vh'>
+                <Box p={8} borderWidth={1} borderRadius={8} boxShadow='lg'>
+                    <Text>
+                        Still Loading....
+                        <br></br>
+                        Or no questions available.{' '}
+                        <Link
+                            to='/question/create'
+                            style={{
+                                color: 'blue',
+                                textDecoration: 'underline',
+                            }}>
+                            <Text
+                                as='span'
+                                color='blue'
+                                textDecoration='underline'>
+                                Make one here
+                            </Text>
+                        </Link>
+                        .
+                    </Text>
+                </Box>
+            </Center>
+        );
     }
 
     return (
@@ -147,29 +196,12 @@ function QuestioningApp() {
                                     Edit choices below:
                                 </Text>
                                 <Center flexDirection='column'>
-                                    {questions[
-                                        currentQuestionIndex
-                                    ].answer_choices.map((choice, index) => (
-                                        <Input
-                                            key={index}
-                                            placeholder={`Enter choice ${
-                                                index + 1
-                                            }`}
-                                            value={
-                                                updatedChoices[index] !==
-                                                undefined
-                                                    ? updatedChoices[index]
-                                                    : `[${choice}]`
-                                            }
-                                            onChange={(event) =>
-                                                handleChoicesChange(
-                                                    index,
-                                                    event
-                                                )
-                                            }
-                                            mt={2}
-                                        />
-                                    ))}
+                                    <Input
+                                        placeholder='Enter updated choices separated by commas'
+                                        value={updatedChoices.join(', ')}
+                                        onChange={handleInputChange}
+                                        size='lg' // Adjust the size to make it larger
+                                    />
                                 </Center>
                                 <Button
                                     mt={4}
@@ -253,12 +285,4 @@ function QuestioningApp() {
     );
 }
 
-function App() {
-    return (
-        <ChakraProvider>
-            <QuestioningApp />
-        </ChakraProvider>
-    );
-}
-
-export default App;
+export default QuestioningApp;
